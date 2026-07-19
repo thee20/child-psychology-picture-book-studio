@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#e9ede9">
+  <title>儿童心理绘本工坊</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-shell="native-desktop">
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">绘</div>
+        <div>
+          <div class="brand-name">儿童心理绘本工坊</div>
+          <input id="projectTitle" class="project-title" value="小刺猬的勇气口袋" aria-label="项目名称">
+        </div>
+      </div>
+      <nav class="workflow" aria-label="功能导航">
+        <button class="workflow-step is-active" data-panel="outline" title="导入大纲或 AI 创作完整绘本"><span>1</span>大纲</button>
+        <button class="workflow-step" data-panel="story" title="编辑本页文案，可用 AI 润色/精简/重写"><span>2</span>文案</button>
+        <button class="workflow-step" data-panel="characters" title="角色设定、锁定、设定图与预览"><span>3</span>角色</button>
+        <button class="workflow-step" data-panel="visual" title="插画提示词、生成与画面调整"><span>4</span>分镜</button>
+        <button class="workflow-step" data-panel="editor" title="字体、文字边框、颜色与排版"><span>5</span>编辑</button>
+        <button id="lessonModeBtn" class="workflow-step teacher-mode-step" data-open-teacher="plan" title="与绘本并列：生成教案/活动单，可导入文档与知识库"><span>教</span>备课</button>
+        <button id="pptModeBtn" class="workflow-step teacher-mode-step" data-open-teacher="ppt" title="与绘本并列：生成 PPT 课件结构与讲稿并导出"><span>P</span>PPT</button>
+      </nav>
+      <div class="top-actions">
+        <div id="connectionBadge" class="connection-badge is-pending" title="模型 API 连接状态"><i></i><span>连接中</span></div>
+        <button id="apiConfigBtn" class="button button-quiet" title="配置第三方模型 API（Base URL + API Key）">API 接入</button>
+        <button id="modelCatalogBtn" class="button button-quiet" title="查看模型能力、可用性与调用余量统计">模型</button>
+        <button id="openProjectsBtn" class="button button-quiet" title="打开本地已保存项目">打开</button>
+        <button id="saveBtn" class="button button-secondary" title="保存绘本项目到本地">保存</button>
+        <button id="exportBtn" class="button button-primary" title="导出整本绘本（PDF / PNG / JPEG，可自选保存位置）">导出</button>
+        <button id="helpBtn" class="button button-quiet" title="使用帮助与功能说明">帮助</button>
+        <button id="exitBtn" class="button button-quiet button-exit" title="退出程序">退出</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="pages-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">STORYBOARD</span>
+            <h2>绘本页面 <b id="pageCount">4</b></h2>
+          </div>
+          <button id="addPageBtn" class="icon-button" title="添加页面" aria-label="添加页面">＋</button>
+        </div>
+        <div class="batch-row">
+          <button id="outlineImportBtn" class="button button-secondary button-small">导入大纲</button>
+          <input id="outlineFileInput" type="file" accept=".txt,.md,.json,.doc,.docx,.rtf" hidden>
+          <button id="batchImageBtn" class="button button-quiet button-small">批量出图</button>
+        </div>
+        <div id="pageList" class="page-list"></div>
+        <div class="pages-footer">
+          <button id="duplicatePageBtn" class="footer-action">复制本页</button>
+          <button id="deletePageBtn" class="footer-action danger">删除</button>
+        </div>
+      </aside>
+
+      <section class="canvas-area">
+        <div class="canvas-toolbar">
+          <div class="toolbar-group">
+            <button id="prevPageBtn" class="icon-button" title="上一页" aria-label="上一页">‹</button>
+            <span id="pagePosition" class="page-position">第 1 / 4 页</span>
+            <button id="nextPageBtn" class="icon-button" title="下一页" aria-label="下一页">›</button>
+          </div>
+          <div class="toolbar-group">
+            <button id="fitBtn" class="toolbar-button is-active">适合画布</button>
+            <button id="zoomOutBtn" class="icon-button" title="缩小" aria-label="缩小">−</button>
+            <span id="zoomLabel" class="zoom-label">82%</span>
+            <button id="zoomInBtn" class="icon-button" title="放大" aria-label="放大">＋</button>
+          </div>
+        </div>
+
+        <div id="stageViewport" class="stage-viewport">
+          <div id="bookStage" class="book-stage">
+            <div id="stageArtwork" class="stage-artwork"></div>
+            <div class="stage-vignette"></div>
+            <div id="textOverlay" class="text-overlay is-selected bubble-rounded" tabindex="0">
+              <div id="overlayText" class="overlay-text" contenteditable="true" spellcheck="false"></div>
+              <i class="bubble-tail" aria-hidden="true"></i>
+              <i class="selection-handle top-left" data-resize="nw"></i>
+              <i class="selection-handle top-right" data-resize="ne"></i>
+              <i class="selection-handle bottom-left" data-resize="sw"></i>
+              <i class="selection-handle bottom-right" data-resize="se"></i>
+              <i class="selection-handle mid-top" data-resize="n"></i>
+              <i class="selection-handle mid-bottom" data-resize="s"></i>
+              <i class="selection-handle mid-left" data-resize="w"></i>
+              <i class="selection-handle mid-right" data-resize="e"></i>
+            </div>
+            <div id="imageEmptyState" class="image-empty-state">
+              <div class="empty-illustration"><span></span><i></i><b></b></div>
+              <strong>这一页还没有画面</strong>
+              <button id="emptyGenerateBtn" class="button button-primary button-small">生成插画</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="statusbar">
+          <span id="autosaveStatus">已自动保存到本地</span>
+          <span>画布 4:3 · 1536 × 1024</span>
+        </div>
+      </section>
+
+      <aside class="inspector">
+        <div class="inspector-tabs" role="tablist">
+          <button class="inspector-tab is-active" data-tab="page">页面</button>
+          <button class="inspector-tab" data-tab="image">画面</button>
+          <button class="inspector-tab" data-tab="character">角色</button>
+          <button class="inspector-tab" data-tab="text">文字</button>
+        </div>
+
+        <div id="tab-page" class="inspector-content is-active">
+          <section class="control-section">
+            <div class="section-title-row"><h3>本页文案</h3><span id="charCount">0 字</span></div>
+            <label class="field-label" for="pageTitleInput">页标题</label>
+            <input id="pageTitleInput" class="text-input" placeholder="这一页的标题">
+            <label class="field-label" for="pageTextInput">正文</label>
+            <textarea id="pageTextInput" class="text-area story-textarea" rows="7"></textarea>
+            <div class="inline-actions">
+              <button id="polishTextBtn" class="button button-secondary button-small">AI 润色</button>
+              <button id="shortenTextBtn" class="button button-quiet button-small">精简</button>
+              <button id="regenerateTextBtn" class="button button-quiet button-small">重写</button>
+            </div>
+          </section>
+          <section class="control-section">
+            <div class="section-title-row"><h3>心理目标</h3><span class="soft-tag">温和表达</span></div>
+            <select id="emotionSelect" class="select-input">
+              <option>认识并表达情绪</option><option>建立安全感</option><option>面对分离焦虑</option>
+              <option>培养自信与勇气</option><option>学习同伴交往</option><option>接纳失败与挫折</option>
+            </select>
+            <label class="field-label" for="editorNoteInput">创作备注</label>
+            <textarea id="editorNoteInput" class="text-area" rows="3" placeholder="本页要避免或强调的内容"></textarea>
+          </section>
+        </div>
+
+        <div id="tab-image" class="inspector-content">
+          <section class="control-section">
+            <div class="section-title-row"><h3>AI 插画</h3><span id="imageStatus" class="status-text">待生成</span></div>
+            <p class="feature-hint">批量出图会强制统一画风；第一张图是全书画风锚点（强制绘本插画，禁止照片风）。建议先锁定角色设定图。若某页偏照片，点「重建一致性分镜词」后重生成。</p>
+            <label class="field-label" for="artStyleSelect">整本画风（一致性锁定）</label>
+            <select id="artStyleSelect" class="select-input" title="批量/单页出图都按此画风锁定，避免卡通/真人混搭">
+              <option value="warm-watercolor">温暖水彩儿童绘本</option>
+              <option value="soft-crayon">柔和彩铅绘本</option>
+              <option value="flat-picturebook">扁平儿童绘本</option>
+              <option value="storybook-gouache">水粉故事绘本</option>
+            </select>
+            <label class="field-label" for="imageModelSelect">图片模型</label>
+            <select id="imageModelSelect" class="select-input"></select>
+            <label class="field-label" for="imagePromptInput">画面提示词（会自动加入整本一致性约束）</label>
+            <textarea id="imagePromptInput" class="text-area prompt-area" rows="8"></textarea>
+            <div class="prompt-tools">
+              <button id="buildPromptBtn" class="button button-quiet button-small">重建一致性分镜词</button>
+              <button id="rebuildAllPromptsBtn" class="button button-quiet button-small">全书统一提示词</button>
+              <button id="copyPromptBtn" class="button button-quiet button-small">复制</button>
+            </div>
+            <button id="generateImageBtn" class="button button-primary button-wide">生成本页插画</button>
+            <button id="uploadImageBtn" class="button button-secondary button-wide">上传本地图片</button>
+            <input id="imageFileInput" type="file" accept="image/*" hidden>
+          </section>
+          <section class="control-section compact">
+            <h3>画面调整</h3>
+            <div class="field-grid two">
+              <label><span>填充方式</span><select id="imageFitSelect" class="select-input"><option value="cover">铺满</option><option value="contain">完整显示</option></select></label>
+              <label><span>横向位置</span><input id="imageXRange" type="range" min="0" max="100" value="50"></label>
+            </div>
+            <label class="range-label"><span>图片缩放 <b id="imageScaleValue">100%</b></span><input id="imageScaleRange" type="range" min="100" max="180" value="100"></label>
+          </section>
+        </div>
+
+        <div id="tab-character" class="inspector-content">
+          <section class="control-section">
+            <div class="section-title-row"><h3>角色设定</h3><button id="addCharacterBtn" class="text-button">＋ 新角色</button></div>
+            <p class="feature-hint">外形锚点写清颜色、服饰、标志物，跨页角色更稳定。</p>
+            <div id="characterList" class="character-list"></div>
+          </section>
+          <section class="control-section">
+            <div class="section-title-row"><h3>角色预览</h3><button id="openCharacterPreviewBtn" type="button" class="text-button">放大预览</button></div>
+            <div id="characterPreviewCard" class="character-preview-card" title="点击放大预览角色设定图">
+              <div id="characterPreviewArt" class="character-preview-art"></div>
+              <div class="character-preview-meta">
+                <strong id="characterPreviewName">未命名角色</strong>
+                <span id="characterPreviewTraits">性格待补充</span>
+                <p id="characterPreviewAppearance">补充外形后可生成设定图并预览。</p>
+              </div>
+            </div>
+          </section>
+          <section id="characterEditor" class="control-section character-editor">
+            <label class="field-label" for="characterNameInput">名字</label>
+            <input id="characterNameInput" class="text-input">
+            <label class="field-label" for="characterAppearanceInput">外形锚点</label>
+            <textarea id="characterAppearanceInput" class="text-area" rows="4"></textarea>
+            <label class="field-label" for="characterTraitsInput">性格</label>
+            <input id="characterTraitsInput" class="text-input">
+            <div class="lock-row">
+              <div><strong>角色锁定</strong><span>固定外形锚点用于每页提示词</span></div>
+              <label class="switch"><input id="characterLockInput" type="checkbox"><span></span></label>
+            </div>
+            <button id="generateCharacterBtn" class="button button-secondary button-wide">生成角色设定图</button>
+          </section>
+        </div>
+
+        <div id="tab-text" class="inspector-content">
+          <section class="control-section">
+            <h3>文字样式</h3>
+            <p class="feature-hint">可改字体与颜色。画布上拖动文字框可移动；拖四角/边框可缩放气泡大小。</p>
+            <label class="field-label" for="fontFamilySelect">字体</label>
+            <select id="fontFamilySelect" class="select-input">
+              <option value="'Microsoft YaHei', 'PingFang SC', sans-serif">温暖黑体（雅黑）</option>
+              <option value="KaiTi, 'STKaiti', serif">童趣楷体</option>
+              <option value="SimSun, 'Songti SC', serif">故事宋体</option>
+              <option value="FangSong, 'STFangsong', serif">诗意仿宋</option>
+              <option value="YouYuan, 'Yuanti SC', sans-serif">圆润幼圆</option>
+              <option value="LiSu, 'STLiti', serif">手写隶书</option>
+              <option value="'STXingkai', KaiTi, cursive">行楷标题</option>
+              <option value="Georgia, 'Times New Roman', serif">英文衬线</option>
+              <option value="system-ui, sans-serif">系统默认</option>
+            </select>
+            <div class="field-grid two">
+              <label><span>字号 <b id="fontSizeValue">34</b></span><input id="fontSizeRange" type="range" min="18" max="72" value="34"></label>
+              <label><span>行距 <b id="lineHeightValue">1.6</b></span><input id="lineHeightRange" type="range" min="10" max="24" value="16"></label>
+            </div>
+            <label class="field-label">对齐</label>
+            <div id="alignControl" class="segmented-control">
+              <button data-value="left" type="button">左</button><button data-value="center" class="is-active" type="button">中</button><button data-value="right" type="button">右</button>
+            </div>
+            <div class="field-grid two color-grid">
+              <label><span>文字</span><input id="textColorInput" type="color" value="#22302a"></label>
+              <label><span>气泡底色</span><input id="textBgInput" type="color" value="#fffdf7"></label>
+            </div>
+            <label class="range-label"><span>底色透明度 <b id="bgOpacityValue">84%</b></span><input id="bgOpacityRange" type="range" min="0" max="100" value="84"></label>
+            <div class="field-grid two">
+              <label class="range-label"><span>气泡宽度 <b id="textWidthValue">72%</b></span><input id="textWidthRange" type="range" min="20" max="92" value="72"></label>
+              <label class="range-label"><span>气泡高度 <b id="textHeightValue">自适应</b></span><input id="textHeightRange" type="range" min="12" max="70" value="22"></label>
+            </div>
+          </section>
+          <section class="control-section">
+            <div class="section-title-row"><h3>文字气泡框</h3><span class="soft-tag">可拖拽缩放</span></div>
+            <p class="feature-hint">选择气泡样式与边框；在预览画布上拖边角可放大缩小气泡框。</p>
+            <label class="field-label">气泡样式</label>
+            <div id="bubbleShapeControl" class="bubble-shape-grid">
+              <button type="button" data-value="rounded" class="is-active" title="圆角矩形">圆角框</button>
+              <button type="button" data-value="speech" title="对话气泡">对话框</button>
+              <button type="button" data-value="cloud" title="云朵气泡">云朵框</button>
+              <button type="button" data-value="caption" title="底部字幕条">字幕条</button>
+              <button type="button" data-value="square" title="直角边框">直角框</button>
+              <button type="button" data-value="none" title="无气泡仅文字">无气泡</button>
+            </div>
+            <div class="field-grid two color-grid" style="margin-top:10px">
+              <label><span>边框颜色</span><input id="bubbleBorderColor" type="color" value="#d4c4a8"></label>
+              <label><span>边框粗细 <b id="bubbleBorderWidthValue">2</b>px</span><input id="bubbleBorderWidth" type="range" min="0" max="8" value="2"></label>
+            </div>
+            <label class="range-label"><span>圆角 <b id="bubbleRadiusValue">16</b>px</span><input id="bubbleRadiusRange" type="range" min="0" max="40" value="16"></label>
+            <label class="field-label">对话尾巴方向（对话框时）</label>
+            <div id="bubbleTailControl" class="segmented-control four">
+              <button type="button" data-value="bottom" class="is-active">下</button>
+              <button type="button" data-value="left">左</button>
+              <button type="button" data-value="right">右</button>
+              <button type="button" data-value="top">上</button>
+            </div>
+            <button id="resetTextStyleBtn" class="button button-quiet button-wide">恢复默认样式</button>
+          </section>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <dialog id="outlineDialog" class="modal">
+    <form method="dialog" class="modal-card wide">
+      <div class="modal-header"><div><span class="eyebrow">STORY SEED</span><h2>导入绘本大纲</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
+      <div class="modal-grid">
+        <div>
+          <label class="field-label" for="outlineTextInput">大纲内容</label>
+          <textarea id="outlineTextInput" class="text-area outline-area" placeholder="每行一页，或粘贴 JSON 大纲"></textarea>
+          <button id="chooseOutlineFileBtn" type="button" class="button button-quiet button-small">选择 TXT / MD / DOC / DOCX</button>
+        </div>
+        <div class="story-settings">
+          <label><span>适读年龄</span><select id="ageSelect" class="select-input"><option>3-5 岁</option><option selected>5-7 岁</option><option>7-9 岁</option><option>9-12 岁</option></select></label>
+          <label><span>心理主题</span><select id="themeSelect" class="select-input"><option>勇气与自信</option><option>情绪识别</option><option>分离焦虑</option><option>同伴交往</option><option>挫折教育</option></select></label>
+          <label><span>绘本页数</span><input id="pageCountInput" class="text-input" type="number" min="4" max="24" value="8"></label>
+          <label><span>叙事风格</span><select id="storyStyleSelect" class="select-input"><option>温柔诗意</option><option>轻松幽默</option><option>日常写实</option><option>奇幻想象</option></select></label>
+          <label><span>文本模型</span><select id="textModelSelect" class="select-input"></select></label>
+        </div>
+      </div>
+      <div class="modal-actions"><button value="cancel" class="button button-quiet">取消</button><button id="parseOutlineBtn" type="button" class="button button-secondary">按行导入</button><button id="aiOutlineBtn" type="button" class="button button-primary">AI 创作完整绘本</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="apiConfigDialog" class="modal">
+    <form method="dialog" class="modal-card wide api-config-modal">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">API CONNECT</span>
+          <h2>第三方模型 API 接入</h2>
+          <p class="modal-subtitle">填写 OpenAI 兼容接口的 Base URL 与 API Key。密钥仅保存在本地 <code>data/user-api-config.json</code>，不会上传到本项目仓库。</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="关闭">×</button>
+      </div>
+      <div id="apiConfigStatus" class="api-config-status">正在读取配置…</div>
+      <div class="field-grid two">
+        <label class="span-2"><span>服务名称（可选）</span>
+          <input id="apiProviderNameInput" class="text-input" type="text" placeholder="例如：My OpenAI Proxy / DeepSeek / 自建网关" autocomplete="off">
+        </label>
+        <label class="span-2"><span>API Base URL *</span>
+          <input id="apiBaseUrlInput" class="text-input" type="url" placeholder="https://api.example.com/v1" autocomplete="off" spellcheck="false">
+        </label>
+        <label class="span-2"><span>API Key *</span>
+          <input id="apiKeyInput" class="text-input" type="password" placeholder="粘贴密钥（保存后不会再次明文显示）" autocomplete="off" spellcheck="false">
+        </label>
+      </div>
+      <p class="feature-hint">支持任意 OpenAI 兼容服务：需提供 <code>/v1/models</code>、<code>/v1/chat/completions</code>；图片能力需兼容 <code>/v1/images/generations</code> 或 chat 多模态出图。优先级：环境变量 &gt; 本页配置 &gt; 本地 WorkBuddy。</p>
+      <div class="preset-row" aria-label="常用地址模板">
+        <button type="button" class="button button-quiet button-small" data-api-preset="https://api.openai.com/v1">OpenAI</button>
+        <button type="button" class="button button-quiet button-small" data-api-preset="https://api.deepseek.com/v1">DeepSeek</button>
+        <button type="button" class="button button-quiet button-small" data-api-preset="https://generativelanguage.googleapis.com/v1beta/openai">Gemini OpenAI 兼容</button>
+        <button type="button" class="button button-quiet button-small" data-api-preset="">清空地址</button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="apiConfigClearBtn" class="button button-quiet">清除本地配置</button>
+        <button type="button" id="apiConfigTestBtn" class="button button-secondary">仅测试连接</button>
+        <button type="button" id="apiConfigSaveBtn" class="button button-primary">保存并连接</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="modelCatalogDialog" class="modal">
+    <form method="dialog" class="modal-card wide model-modal-card">
+      <div class="modal-header"><div><span class="eyebrow">MODEL LAB</span><h2>模型能力、余量与响应</h2><p class="modal-subtitle">按能力与可用性排序。响应状态来自你接入的上游实测；调用次数与 Token 为本地统计（非服务商硬限额）。</p></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
+      <div id="modelUsageBar" class="model-usage-bar">本会话尚未调用模型</div>
+      <div class="catalog-tabs"><button type="button" class="catalog-tab is-active" data-catalog="text">文本与推理</button><button type="button" class="catalog-tab" data-catalog="image">图片与绘画</button></div>
+      <div id="modelCatalogList" class="model-catalog-list"></div>
+    </form>
+  </dialog>
+
+  <dialog id="teacherDialog" class="modal">
+    <form method="dialog" class="modal-card wide teacher-modal-card">
+      <div class="modal-header"><div><span class="eyebrow">LESSON STUDIO</span><h2 id="teacherDialogTitle">心理课备课台</h2><p class="modal-subtitle" id="teacherDialogSubtitle">与绘本功能并列：可导入文档与知识库，生成可编辑、可导出的教学材料。</p></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
+      <div class="teacher-layout">
+        <div class="teacher-form">
+          <div class="teacher-mode-tabs">
+            <button type="button" class="teacher-tab is-active" data-teacher-tab="plan" title="完整心理健康教案">备课教案</button>
+            <button type="button" class="teacher-tab" data-teacher-tab="ppt" title="10–14 页课件与教师讲稿">PPT 课件</button>
+            <button type="button" class="teacher-tab" data-teacher-tab="handout" title="可打印学生活动单">学生活动单</button>
+          </div>
+          <label class="field-label" for="teacherTitleInput">课题</label><input id="teacherTitleInput" class="text-input" value="我的情绪会说话">
+          <div class="field-grid two"><label><span>年级</span><select id="teacherGradeSelect" class="select-input"><option>一年级</option><option>二年级</option><option selected>三年级</option><option>四年级</option><option>五年级</option><option>六年级</option></select></label><label><span>课时</span><select id="teacherDurationSelect" class="select-input"><option>40 分钟</option><option selected>一课时（45 分钟）</option><option>两课时</option></select></label></div>
+          <label class="field-label" for="teacherContextInput">课堂情境 / 学情</label><textarea id="teacherContextInput" class="text-area" rows="3" placeholder="例如：班级最近有同学因考试结果闷闷不乐，不愿意表达自己的感受。"></textarea>
+          <label class="field-label" for="teacherNeedsInput">特别要求</label><textarea id="teacherNeedsInput" class="text-area" rows="2" placeholder="希望包含一个绘本故事、一个小组活动和课后家庭延伸。"></textarea>
+          <label class="field-label" for="teacherModelSelect">AI 文本模型（已按能力排序）</label><select id="teacherModelSelect" class="select-input"></select>
+
+          <div class="teacher-import-block">
+            <div class="section-title-row"><h3 style="margin:0;font-size:12px">文档导入</h3><span class="soft-tag">TXT/DOC/DOCX…</span></div>
+            <p class="feature-hint" style="margin:8px 0">导入现有教案、课标或学情说明，作为 AI 生成参考。</p>
+            <textarea id="courseDocInput" class="text-area" rows="3" placeholder="粘贴内容，或选择文件导入…"></textarea>
+            <div class="inline-actions">
+              <button id="chooseCourseDocBtn" type="button" class="button button-quiet button-small">选择文档</button>
+              <button id="clearCourseDocBtn" type="button" class="button button-quiet button-small">清空</button>
+              <button id="saveDocToKnowledgeBtn" type="button" class="button button-secondary button-small">写入知识库</button>
+            </div>
+            <input id="courseDocFileInput" type="file" accept=".txt,.md,.json,.doc,.docx,.rtf" hidden>
+          </div>
+
+          <div class="teacher-import-block">
+            <div class="section-title-row"><h3 style="margin:0;font-size:12px">知识库</h3><button id="refreshKnowledgeBtn" type="button" class="text-button">刷新</button></div>
+            <p class="feature-hint" style="margin:8px 0">勾选条目后，生成教案/PPT 时会作为上下文引用。</p>
+            <div class="inline-actions">
+              <button id="importKnowledgeBtn" type="button" class="button button-quiet button-small">导入到知识库</button>
+            </div>
+            <input id="knowledgeFileInput" type="file" accept=".txt,.md,.json,.doc,.docx,.rtf" hidden>
+            <div id="knowledgeList" class="knowledge-list"></div>
+          </div>
+
+          <div class="teacher-actions"><button id="generatePlanBtn" type="button" class="button button-primary">AI 生成备课材料</button><button id="exportPlanBtn" type="button" class="button button-secondary">导出 Word 教案</button><button id="exportPptBtn" type="button" class="button button-secondary">导出 PPTX</button></div>
+        </div>
+        <div class="teacher-preview"><div class="preview-heading"><span id="teacherPreviewType">教案预览</span><span class="soft-tag">可继续编辑</span></div><div id="teacherPreview" class="teacher-preview-body"><div class="preview-placeholder"><div class="empty-illustration"><span></span><i></i><b></b></div><p>填写课题后，AI 会生成学情分析、目标、流程、评价与延伸活动。</p></div></div></div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="characterPreviewDialog" class="modal">
+    <form method="dialog" class="modal-card wide character-preview-modal">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">CHARACTER</span>
+          <h2 id="characterPreviewDialogTitle">角色预览</h2>
+          <p class="modal-subtitle">滚轮缩放、拖动平移、滚动条查看完整设定图。</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="关闭">×</button>
+      </div>
+      <div class="character-preview-dialog-body">
+        <div class="character-viewer">
+          <div class="character-viewer-toolbar">
+            <button type="button" id="charZoomOutBtn" class="button button-quiet button-small">缩小</button>
+            <span id="charZoomLabel" class="zoom-label">100%</span>
+            <button type="button" id="charZoomInBtn" class="button button-quiet button-small">放大</button>
+            <button type="button" id="charZoomFitBtn" class="button button-secondary button-small">适合窗口</button>
+            <button type="button" id="charZoomResetBtn" class="button button-quiet button-small">1:1</button>
+          </div>
+          <div id="characterViewerViewport" class="character-viewer-viewport" title="滚轮缩放 · 按住拖动平移">
+            <div id="characterViewerStage" class="character-viewer-stage">
+              <img id="characterPreviewImage" class="character-preview-image" alt="角色设定图" hidden>
+              <div id="characterPreviewPlaceholder" class="character-preview-placeholder">暂无设定图</div>
+            </div>
+          </div>
+        </div>
+        <div class="character-preview-dialog-info">
+          <div class="preview-info-block"><span class="field-label">名字</span><strong id="characterPreviewDialogName">—</strong></div>
+          <div class="preview-info-block"><span class="field-label">性格</span><p id="characterPreviewDialogTraits">—</p></div>
+          <div class="preview-info-block"><span class="field-label">外形锚点</span><p id="characterPreviewDialogAppearance">—</p></div>
+          <div class="preview-info-block"><span class="field-label">锁定</span><p id="characterPreviewDialogLock">未锁定</p></div>
+          <button id="previewGenerateCharacterBtn" type="button" class="button button-primary button-wide">生成 / 更新设定图</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="helpDialog" class="modal">
+    <form method="dialog" class="modal-card wide">
+      <div class="modal-header"><div><span class="eyebrow">HELP</span><h2>使用帮助</h2><p class="modal-subtitle">绘本创作与心理备课/PPT 并列的工作台说明。</p></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
+      <div class="help-content-simple">
+        <h3>三大并列能力</h3>
+        <ul>
+          <li><strong>绘本创作</strong>：顶部 1–5 步（大纲→文案→角色→分镜→编辑），可直接导出 PDF / PNG / JPEG（含插画）；保存时弹出「另存为」自选位置。</li>
+          <li><strong>备课</strong>：与绘本并列入口，生成教案/活动单，支持文档与知识库，导出 Word。</li>
+          <li><strong>PPT</strong>：与绘本并列入口，生成课件结构与讲稿，导出 PPTX。</li>
+        </ul>
+        <h3>角色预览与文字</h3>
+        <ul>
+          <li>角色页可预览设定图；建议生成后锁定外形。</li>
+          <li>编辑页支持多种字体与文字气泡框（圆角/对话/云朵/字幕等）；画布上可拖动缩放气泡。</li>
+          <li>角色预览支持滚轮缩放、拖动平移查看完整设定图。</li>
+          <li>AI 创作、出图、备课、导出进行中时，可点「中断取消」随时停止。</li>
+          <li>批量出图会锁定整本画风，并引用角色设定图与已生成页作连贯参考；先锁定角色设定图效果最好。</li>
+        </ul>
+        <h3>模型余量与响应</h3>
+        <ul>
+          <li>顶部连接徽章显示 NAS 连接；「模型」里可看能力分、可用性、本会话调用与 Token 统计。</li>
+          <li>可用性会在每次成功/失败调用后自动更新。</li>
+        </ul>
+        <h3>小提示</h3>
+        <ul>
+          <li>按钮悬停与灰色提示文案为功能简介。</li>
+          <li>自动草稿保存在本地；正式存档请点「保存」。「退出」会关闭程序。</li>
+        </ul>
+      </div>
+      <div class="modal-actions"><button value="cancel" class="button button-primary">知道了</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="projectsDialog" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header"><div><span class="eyebrow">LOCAL LIBRARY</span><h2>本地项目</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
+      <div id="projectList" class="project-list"></div>
+    </form>
+  </dialog>
+
+  <dialog id="exportBookDialog" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">EXPORT</span>
+          <h2>导出绘本</h2>
+          <p class="modal-subtitle">直接生成文件；保存时会弹出「另存为」，可自选文件夹与文件名。插画以真实图片嵌入，不依赖系统打印。</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="关闭">×</button>
+      </div>
+      <div class="export-format-list">
+        <button id="exportPdfBtn" type="button" class="button button-primary button-wide">导出 PDF（整本 · 含图片）</button>
+        <button id="exportPngZipBtn" type="button" class="button button-secondary button-wide">导出 PNG 分页（ZIP）</button>
+        <button id="exportJpegZipBtn" type="button" class="button button-secondary button-wide">导出 JPEG 分页（ZIP）</button>
+        <button id="exportPrintBtn" type="button" class="button button-quiet button-wide">系统打印 / 另存 PDF（备用）</button>
+      </div>
+      <div class="modal-actions"><button value="cancel" class="button button-quiet">关闭</button></div>
+    </form>
+  </dialog>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+  <div id="busyOverlay" class="busy-overlay" hidden>
+    <div class="busy-card">
+      <div class="spinner"></div>
+      <strong id="busyTitle">AI 正在创作</strong>
+      <span id="busyDetail">请稍候</span>
+      <div class="progress-track"><i id="busyProgress"></i></div>
+      <button id="cancelBusyBtn" type="button" class="button button-exit button-wide">中断取消</button>
+    </div>
+  </div>
+
+  <script src="/desktop-bridge.js"></script>
+  <script src="/icons.js"></script>
+  <!-- Domain modules (classic scripts share one global scope; order matters) -->
+  <script src="/js/core.js"></script>
+  <script src="/js/render.js"></script>
+  <script src="/js/api-models.js"></script>
+  <script src="/js/story-ai.js"></script>
+  <script src="/js/teacher.js"></script>
+  <script src="/js/export-book.js"></script>
+  <script src="/js/app-main.js"></script>
+</body>
+</html>

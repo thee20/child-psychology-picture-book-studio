@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Local runtime data (projects, knowledge base, model status/usage)
+data/
+!data/.gitkeep
+
+# Logs & temp
+*.log
+desktop-startup.log
+*.tmp
+*.temp
+Thumbs.db
+Desktop.ini
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Desktop build artifacts
+desktop/bin/
+desktop/obj/
+desktop-runtime/
+PictureBookStudio-Launcher.exe
+*.pdb
+*.user
+*.suo
+
+# Exports / office temp
+*.pptx
+*.docx
+!scripts/**
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Optional large docs
+*.pdf
+
+# Release output
+dist/

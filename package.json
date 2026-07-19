@@ -1,0 +1,15 @@
+{
+  "name": "child-psychology-picture-book-studio",
+  "version": "1.3.4",
+  "private": true,
+  "description": "Child Psychology Picture Book Studio - local desktop app for picture books and primary school psychology lesson prep",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check public/app.js && node --check public/desktop-bridge.js && node --check scripts/smoke-check.js",
+    "smoke": "node scripts/smoke-check.js",
+    "release": "powershell -ExecutionPolicy Bypass -File ./scripts/build-release.ps1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
